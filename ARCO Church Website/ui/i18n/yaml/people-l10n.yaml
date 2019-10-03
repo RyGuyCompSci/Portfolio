@@ -1,0 +1,142 @@
+people:
+  title:
+    en: People
+    es: Personas
+  title-roles:
+    en: Roles
+    es: Papeles
+  attributes:
+    en: Attributes
+    es: Atributas
+  personal-information:
+    en: Personal Information
+    es: Informacion personal
+  account-information:
+    en: Account Information
+    es: Información de la cuenta
+  additional-information:
+    en: Additional Information
+    es: Información Adicional
+  optional:
+    en: Optional
+    es: Opcional
+  next:
+    en: Next
+    es: Siguiente
+  previous:
+    en: Previous
+    es: Anterior
+
+account:
+  username:
+    en: Username
+    es: Nombre de usuario
+  password:
+    en: Password
+    es: Contraseña
+  repeat-password:
+    en: Repeat Password
+    es: Repite la contraseña
+  no-account:
+    en: Don't have an account?
+    es: ¿No tienes una cuenta?
+  active:
+    _desc: Account status active
+    en: Active
+    es: Activo
+  inactive:
+    _desc: Account status inactive
+    en: Inactive
+    es: Inactivo
+
+person:
+  account:
+    en: Account
+    es: Cuenta
+  account-info:
+    roles:
+      en: Roles
+      es: Papeles
+  name:
+    first:
+      en: First Name
+      es: Nombre de pila
+    last:
+      en: Last Name
+      es: Apellido
+    second-last:
+      en: Second Last Name
+      es: Segundo Apellido
+  gender:
+    es: Género
+    en: Gender
+  male:
+    en: Male
+    es: Hombre
+  female:
+    en: Female
+    es: Mujer
+  date:
+    birthday:
+      en: Birthday
+      es: Cumpleaños
+  email:
+    en: Email
+    es: Correo electrónico
+  phone:
+    en: Phone
+    es: Teléfono
+  settings:
+    en: Settings for {person}
+    es: Configuración de la {person}
+  actions:
+    new:
+      en: New Person
+      es: Persona Nueva
+    edit:
+      en: Edit Person
+      es: Editar persona
+    add-participant:
+      en: Add a Participant
+      es: Añadir Partícipe
+    add-account:
+      en: Add Account
+      es: Añadir cuenta
+    reset-password:
+      en: Reset Password
+      es: Restablecer la contraseña
+    assign-roles:
+      en: Assign Roles
+      es: Asigne Papeles
+  messages:
+    account-activate:
+      en: Account activated
+      es: Cuenta activada
+    account-deactivate:
+      en: Account deactivated
+      es: Cuenta desactivada
+    canceled:
+      en: Canceled add new person
+      es: Cancelado añadir nueva persona
+    person-add:
+      en: New person added
+      es: Nueva persona agregada
+    person-edit:
+      en: Person edited
+      es: Persona editada
+    person-deactivate:
+      en: Person deactivated
+      es: Persona desactivada
+    person-activate:
+      en: Person activated
+      es: Persona activada
+    person-save-error:
+      en: Person was not saved
+      es: La persona no fue salvada
+    confirm:
+      activate:
+        en: Are you sure you want to restore this person?
+        es: ¿Estás seguro de que quieres restaurar a esta persona?
+      deactivate:
+        en: Are you sure you want to archive this person?
+        es: ¿Estás seguro de que quieres archivar a esta persona?

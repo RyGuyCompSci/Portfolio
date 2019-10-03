@@ -1,0 +1,133 @@
+module: people
+entities:
+  - name: Person
+    singular: person
+    plural: persons
+    uri: /persons
+    table: people_person
+    attributes:
+      - name: id
+        type: integer
+        primary-key: true
+        min: 1
+      - name: first-name
+        type: string
+        min-length: 1
+        length: medium
+        required: true
+      - name: last-name
+        type: string
+        min-length: 1
+        length: medium
+        required: true
+      - name: second-last-name
+        type: string
+        min-length: 1
+        required: false
+        length: medium
+        required: false
+      - name: gender
+        type: string
+        length: 1
+        one-of:
+          - M
+          - F
+      - name: birthday
+        type: date
+      - name: phone
+        type: string
+        length: medium
+      - name: email
+        type: string
+        length: medium
+      - name: active
+        type: boolean
+        required: true
+        default: true
+      - name: location-id
+        type: integer
+        foreign-key: places_location.id
+    relationships:
+      - name: address
+        related-model: Location
+        backref: people
+  - name: Account
+    singular: account
+    plural: accounts
+    uri: /accounts
+    table: people_account
+    attributes:
+      - name: id
+        type: integer
+        primary-key: true
+        min: 1
+      - name: username
+        type: string
+        length: medium
+        min-length: 1
+        required: true
+        unique: true
+      - name: password
+        type: string
+        length: password
+        min-length: 6
+        required: true
+        model-attribute: password_hash
+        private: true
+      - name: active
+        type: boolean
+        required: true
+        default: true
+      - name: confirmed
+        type: boolean
+        required: true
+        default: false
+      - name: person_id
+        type: integer
+        min: 1
+        required: true
+        foreign-key: people_person.id
+  - name: Role
+    singular: role
+    plural: roles
+    uri: /role
+    table: people_role
+    attributes:
+      - name: id
+        type: integer
+        primary-key: true
+        min: 1
+      - name: name_i18n
+        type: string
+        length: locale
+      - name: active
+        type: boolean
+  - name: Manager
+    singular: manager
+    plural: managers
+    uri: /manager
+    table: people_manager
+    attributes:
+      - name: id
+        type: integer
+        primary-key: true
+        min: 1
+      - name: person_id
+        type: integer
+        min: 1
+        required: true
+        foreign-key: people_person.id
+      - name: manager_id
+        type: integer
+        min: 1
+        required: false
+        foreign-key: people_manager.id
+      - name: description_i18n
+        type: string
+        length: i18n
+        required: true
+        foreign-key: i18n_key.id
+    relationships:
+      - name: manager
+        related-model: Manager
+        backref: subordinate

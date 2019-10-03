@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>GameJam F2017</title>
+</head>
+
+<body>
+	<div id="connectdiv">
+		<div hidden>
+			<span>Name:</span>
+			<input id="myName" name="myName" type="text">
+		</div>
+		<div>
+			<span>Server Address:</span>
+			<input id="ipaddress" name="ipaddress" type="text">
+		</div>
+		<input type="button" value="Connect!" onclick="connect()">
+		<div id="connectmsg"></div>
+	</div>
+
+	<div id="gameDiv" style="text-align:center; ">
+		<div style="flex:1; margin:auto; float:center;">
+			<canvas id="canvas" width="750" height="750">Your browser failed to load the canvas.</canvas>
+			<div style="position:absolute; right:10px; top:10px">
+				<ol id="scoreboard" style=>
+				</ol>
+			</div>
+		</div>
+	</div>
+<script src="particles.js"></script>
+<script>
+var ctx = canvas.getContext("2d");
+ctx.save();
+var backcolor = "#777";
+var pause = 10;
+var gameInt;
+
+var socket;
+
+
+var aimAngle;
+
+var keys = {};
+
+var otherplayers = [];
+var bullets = [];
+var squares = [];
+var walls = [];
+var sReady = 0;
+
+var invulnTimer = 0;
+var blink = false;
+
+
+const [CONNECT, UPDATE, SHOOT, DAMAGE, SPECTATE] = [0,1,2,3,4];
+const pi = Math.PI;
+const tau = 2*pi;
+const R = 625;
+const PSIZE = 20;
+const COOLDOWN = 15 //;
+
+
+function newPacket(type, obj){
+	return JSON.stringify({'type': type, 'obj': obj});
+}
+
+
+function connect() {
+	connectmsg.innerText = "";
+	var url = 'ws://' + ipaddress.value + ':4243';
+	socket = new WebSocket(url);
+	socket.onopen = function () {
+		connectdiv.hidden = true;
+		canvas.hidden = false;
+		socket.send(newPacket(SPECTATE, {}));
+	}
+	socket.onclose = e => {
+		console.log(e);
+		connectdiv.hidden = false;
+		connectmsg.innerText = "Connection Closed";
+	}
+	socket.onmessage = e => {
+		let temp = JSON.parse(e.data);
+		//console.log(temp)
+		if (temp.type == SPECTATE) {
+			gameInt = setInterval(tick, pause);
+		} else if (temp.type == UPDATE) {
+			otherplayers = temp.obj.players;
+			bullets = temp.obj.bullets;
+			squares = temp.obj.squares;
+			walls = temp.obj.walls;
+			coins = temp.obj.coins;
+			for (let exp of temp.obj.explosions){
+				if (exp.s)
+					Particles.spiral(exp.x, exp.y, exp.color, exp.t);
+				else
+					Particles.explode(exp.x, exp.y, exp.color, exp.t);
+			}
+			updateScoreboard(temp.obj.scores)
+		} else if (temp.type == DAMAGE) {
+			console.log("d " + temp.obj)
+			player.damage.push(temp.obj.color);
+		}
+	}
+}
+
+function initGame(obj){
+	gameInt = setInterval(tick, pause);
+	player = obj;
+	invulnTimer = 100;
+}
+
+function updateScoreboard(scores) {
+	while (scoreboard.hasChildNodes()) {
+    	scoreboard.removeChild(scoreboard.lastChild);
+	}
+	for (s of scores) {
+		let node = document.createTextNode(s.name + " " + s.score);
+		let lsit = document.createElement("li");
+		lsit.appendChild(node);
+		lsit.style.color=s.color
+		scoreboard.appendChild(lsit);
+	}
+}
+
+function strokeCircle(x, y, r, color, lw = 2) {
+	ctx.lineWidth = lw;
+	ctx.strokeStyle = color;
+	ctx.beginPath();
+	ctx.arc(x, y, r, 0, tau);
+	ctx.stroke();
+}
+
+function fillCircle(x, y, r, color) {
+	ctx.fillStyle = color;
+	ctx.beginPath();
+	ctx.arc(x, y, r, 0, tau);
+	ctx.fill();
+}
+
+
+function drawField() {
+	ctx.beginPath();
+	//ctx.translate(350 - player.x, 350 + player.y);
+	ctx.fillStyle = "#797";
+	ctx.strokeStyle = "blue";
+	ctx.arc(0, 0, 625, 0, tau);
+	ctx.fill();
+	ctx.stroke();
+
+}
+
+function drawPlayer(p) {
+	ctx.beginPath();
+	ctx.fillStyle = p.color;
+	ctx.strokeStyle = "black";
+	ctx.arc(p.x, -p.y, PSIZE, 0, tau);
+	ctx.fill();
+	ctx.stroke();
+
+	if (p.damage[0]) {
+		ctx.beginPath();
+		ctx.strokeStyle = p.damage[0];
+		ctx.arc(p.x, -p.y, PSIZE-3, 0, tau);
+		ctx.lineWidth = 5;
+		ctx.stroke();
+		ctx.lineWidth = 1;
+	}
+	if (p.damage[1]) {
+		ctx.beginPath();
+		ctx.strokeStyle = p.damage[1];
+		ctx.lineWidth = 5;
+		ctx.arc(p.x, -p.y, PSIZE-8, 0, tau);
+		ctx.stroke();
+		ctx.lineWidth = 1;
+	}
+}
+
+function drawBullet(b){
+	fillCircle(b.x, b.y, 3, b.color);
+}
+
+function drawSquare(s) {
+	ctx.translate(s.x, s.y)
+	ctx.fillStyle = s.color;
+	ctx.beginPath();
+	ctx.rotate(pi-s.theta);
+	ctx.fillRect(-s.r, -s.r, 2*s.r, 2*s.r);
+	ctx.rotate(-pi+s.theta);
+	ctx.translate(-s.x, -s.y);
+}
+
+function drawWall(w) {
+	drawSquare(w);
+}
+
+
+function drawCoin(c){
+	ctx.beginPath();
+	ctx.fillStyle = c.color;
+	ctx.strokeStyle = "black";
+	ctx.arc(c.x, -c.y, 10, 0, tau);
+	ctx.ellipse(c.x, -c.y, 10, 5, pi-c.theta, 0, tau)
+	ctx.fill();
+	ctx.stroke();
+}
+
+function draw() {
+	ctx.fillStyle = backcolor;
+
+	ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+	ctx.translate(canvas.width/2, canvas.height/2);
+	ctx.scale(.5,.5);
+
+	// fillCircle(350 + 625 * Math.cos(player.theta), 350 + 625 * Math.sin(player.theta), 625, "#797")
+	// strokeCircle(350 + 625 * Math.cos(player.theta), 350 + 625 * Math.sin(player.theta), 625, "blue")
+	drawField();
+	for (let w of walls) {
+		drawWall(w);
+	}
+	for (let s of squares) {
+		if (s == null) break;
+		drawSquare(s);
+	}
+	for (let o of otherplayers) {
+		drawPlayer(o);
+	}
+
+	for (let c of coins) {
+		if (c == null) break;
+		drawCoin(c);
+	}
+
+	for (let b of bullets) {
+		if (b == null) break;
+		drawBullet(b);
+	}
+
+	Particles.draw(ctx);
+	ctx.resetTransform();
+}
+
+function tick() {
+	Particles.update();
+	draw();
+}
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# Files and directories that should not be committed to Git.
+
+# API
+.coverage
+__pycache__/
+htmlcov/
+venv/
+private.py
+credentials.py
+data/
+**/migrations/versions/
+
+# UI
+node_modules/
+yarn-error.log
+videos/
+proxy-config.js
+screenshots/
+
+# Other
+.idea/
+dist/
+.vscode/
+.DS_Store
+
+db-*.json
+
+# ETC
+*.swp

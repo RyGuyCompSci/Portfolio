@@ -1,0 +1,24 @@
+add $s1, $s1, $s1
+addi $s1, $s1, -15
+addu $s1, $s1, $at
+addiu $s1, $s1, 15
+and $s1, $s1, $s1
+andi $s1, $s1, 15
+beq $s1, $s1, 15
+bne $s1, $s1, 15
+j 15
+jal 15
+jr $s1
+lbu $s1, $s1, -15
+lhu $s1, $s1, -15
+ll $s1, $s1, 15
+lui $s1, $s1, -15
+lw $s1, 15($s1)
+nop
+nor $s1, $s1, $s1
+or $s1, $s1, $s1
+ori $s1, $s1, -15
+slt $s1, $s1, $s1
+slti $s1, $s1, -15
+sltiu $s1, $s1, -15
+null

@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+    <title>Flying Cats and Dogs</title>
+	<link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+
+    <style>
+        body {
+            display: flex;
+            flex-flow: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #444;
+        }
+        .center{
+            flex: 1;
+        }
+        #players_ul{
+            display: table;
+            margin: 100px auto;
+        }
+        #readybtn{
+            margin: 0 auto;
+            display: table;
+            margin-top: 10px;
+        }
+        #gamediv{
+            margin-top: 20px;
+        }
+        * {
+            font-family: 'Press Start 2P', cursive;
+        }
+        #connectdiv {
+            margin: 0 auto;
+            width: 50%;
+            height: 33%;
+            background-color: #555;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        button {
+            border-radius: 5px;
+            padding: 5px;
+        }
+
+    </style>
+          
+</head>
+<body id="body">
+
+    <div id="connectdiv">
+        <div id="connectmsg"></div>
+        <ul id="players_ul"></ul>
+        <div id="buttonsdiv">
+            <button type="button" id="readybtn" onclick="sendReady(true)">Ready!</button>
+            <button type="button" id="readybtn" onclick="sendReady(false)">Hold On...</button>
+        </div>
+    </div>
+              
+
+    <div id="gamediv" class="center">
+        <!-- <div hidden id="loadmsg">
+            Loading...
+        </div> -->
+        <canvas id="canvas" width="768" height="512"></canvas>
+        <canvas hidden id="renderer" width="768" height="512"></canvas>
+        <canvas hidden id="alphacanvas" width="768" height="512"></canvas>
+        <canvas hidden id="frameloader" width="32" height="32"></canvas>
+    </div>
+<!-- alpha drawing: https://weblogs.asp.net/bleroy/drawing-transparent-glyphs-on-the-html-canvas-->
+</body>
+
+<img hidden id='frame0' src='Frames/frame_0.png' alt='img'>
+<img hidden id='frame1' src='Frames/frame_1.png' alt='img'>
+<img hidden id='frame2' src='Frames/frame_2.png' alt='img'>
+<img hidden id='frame3' src='Frames/frame_3.png' alt='img'>
+<img hidden id='frame4' src='Frames/frame_4.png' alt='img'>
+<img hidden id='frame5' src='Frames/frame_5.png' alt='img'>
+<img hidden id='frame6' src='Frames/frame_6.png' alt='img'>
+<img hidden id='frame7' src='Frames/frame_7.png' alt='img'>
+<img hidden id='frame8' src='Frames/frame_8.png' alt='img'>
+<img hidden id='frame9' src='Frames/frame_9.png' alt='img'>
+<img hidden id='frame10' src='Frames/frame_10.png' alt='img'>
+<img hidden id='frame11' src='Frames/frame_11.png' alt='img'>
+<img hidden id='frame12' src='Frames/frame_12.png' alt='img'>
+<img hidden id='frame13' src='Frames/frame_13.png' alt='img'>
+<img hidden id='frame14' src='Frames/frame_14.png' alt='img'>
+<img hidden id='frame15' src='Frames/frame_15.png' alt='img'>
+<img hidden id='frame16' src='Frames/frame_16.png' alt='img'>
+<img hidden id='frame17' src='Frames/frame_17.png' alt='img'>
+<img hidden id='frame18' src='Frames/frame_18.png' alt='img'>
+<img hidden id='frame19' src='Frames/frame_19.png' alt='img'>
+<img hidden id='frame20' src='Frames/frame_20.png' alt='img'>
+<img hidden id='frame21' src='Frames/frame_21.png' alt='img'>
+<img hidden id='frame22' src='Frames/frame_22.png' alt='img'>
+<img hidden id='frame23' src='Frames/frame_23.png' alt='img'>
+<img hidden id='frame24' src='Frames/frame_24.png' alt='img'>
+<img hidden id='frame25' src='Frames/frame_25.png' alt='img'>
+<img hidden id='frame26' src='Frames/frame_26.png' alt='img'>
+<img hidden id='frame27' src='Frames/frame_27.png' alt='img'>
+
+<!-- <img hidden id='frame28' src='Frames/frame_28.png' alt='img'>
+<img hidden id='frame29' src='Frames/frame_29.png' alt='img'> -->
+
+
+<img hidden id="Wood" src="Tiles/Wood.png" alt="tileimg">
+<img hidden id="Water" src="Tiles/Water.png" alt="tileimg">
+<img hidden id="Stone" src="Tiles/Stone.png" alt="tileimg">
+<img hidden id="Sand" src="Tiles/Sand.png" alt="tileimg">
+<img hidden id="Metal" src="Tiles/Metal.png" alt="tileimg">
+<img hidden id="Grass" src="Tiles/Grass.png" alt="tileimg">
+<img hidden id="Dirt" src="Tiles/Dirt.png" alt="tileimg">
+<img hidden id="Brick" src="Tiles/Brick.png" alt="tileimg">
+<img hidden id="Up" src="Tiles/up.png" alt="tileimg">
+<img hidden id="Down" src="Tiles/down.png" alt="tileimg">
+
+<img hidden id="bomb_box" src="resources/bomb_box.png" alt="bombbox">
+<img hidden id="bomb_upgrade" src="resources/bomb_upgrade.png" alt="bomb_upgrade">
+<img hidden id="bomb" src="resources/bomb.png" alt="bomb">
+
+<img hidden id="back1" src="resources/back1.png" alt="back1">
+<img hidden id="back2" src="resources/back2.png" alt="back2">
+
+<script type="text/javascript" src="particles.js"></script>
+<script type="text/javascript">
+var backmusic = new Audio("resources/sound/cdfighed.mp3");
+var explosion_sound = new Audio("resources/sound/explosion.mp3");
+var dog_woof_sound = new Audio("resources/sound/dog_woof.mp3");
+var dog_death_sound = new Audio("resources/sound/dog_death.mp3");
+var cat_meow_sound = new Audio("resources/sound/cat_meow.mp3");
+var cat_death_sound = new Audio("resources/sound/cat_death.mp3");
+
+backmusic.loop = true;
+
+
+var canvas = document.getElementById('canvas')
+var renderer = document.getElementById('renderer')
+var frameloader = document.getElementById('frameloader')
+var alphacanvas = document.getElementById('alphacanvas')
+var vis_ctx = canvas.getContext('2d')
+var ctx = renderer.getContext('2d')
+var fl_ctx = frameloader.getContext('2d')
+var a_ctx = alphacanvas.getContext('2d')
+var keys = {};
+var lastKeys = {};
+var lastTime
+var mouseX = 0;
+var mouseY = 0;
+var TO_RADIANS = Math.PI/180; 
+var gameInt;
+
+var socket;
+var myServer = getParameterByName('s')
+var myName = getParameterByName('n')
+var myChoice = getParameterByName('c')
+var mySID;
+
+var playing = false;
+var returnTimer = 3000;
+
+var W = renderer.width
+var H = renderer.height
+var worldW;
+var characterImages =  {
+    'Cat': {
+        'green': {
+            'right': [],
+            'left': []
+        },
+        'grey': {
+            'right': [],
+            'left': []
+        },
+        'orange': {
+            'right': [],
+            'left': []
+        },
+        'pink': {
+            'right': [],
+            'left': []
+        },
+    },
+    'Dog': {
+        'green': {
+            'right': [],
+            'left': []
+        },
+        'grey': {
+            'right': [],
+            'left': []
+        },
+        'orange': {
+            'right': [],
+            'left': []
+        },
+        'pink': {
+            'right': [],
+            'left': []
+        },
+    }
+}
+
+const P_COLORS = [
+    'green',
+    'grey',
+    'orange',
+    'pink'
+]
+
+const TILES = {
+    '0,0,0,0': null, //background
+    '76,255,0,255': 0,
+    '127,106,0,255': 1,
+    '127,0,0,255': 2,
+    '0,38,255,255': 3,
+    '128,128,128,255': 4,
+    '255,216,0,255': 5,
+    '255,0,110,255': 6,
+    '0,0,0,255': 7,
+    '178,0,255,255': 8,
+    '255,0,220,255': 9
+}
+
+//packet types
+const SERVER_PLAYING = -4,
+ SERVER_FULL = -3,
+ PLAYERLIST = -2,
+ READY = -1,
+ CONNECT = 0,
+ TICK = 1,
+ EXPLODE = 2,
+ DEATH = 3,
+ AMMO = 4,
+ POWERUP = 5,
+ DEAD = 6,
+ 
+ HURT_SOUND = 8;
+
+const GRAVITY = .85; //1
+const FRICTION = .85;
+const BOMB_FRICTION = .97;
+var tileimgdata = []
+var worldframeimgdatas = [] // actual world data
+var worldframes = [] // heavyweight version of frames (same for all)
+var worldframeorder = [] // get this from server
+var frames = [] //lightweight version of frames
+var bombs = [];
+var ammoboxes = [];
+var powerups = [];
+var displayNumbers = []
+var camerax = 0;
+var lastTime = Date.now();
+var scorelist = [];
+
+var numPlayers;
+
+var otherplayers = [];
+
+const frameHtmlImgs = [
+    frame0,
+    frame1,
+    frame2,
+    frame3,
+    frame4,
+    frame5,
+    frame6,
+    frame7,
+    frame8,
+    frame9,
+    frame10,
+    frame11,
+    frame12,
+    frame13,
+    frame14,
+    frame15,
+    frame16,
+    frame17,
+    frame18,
+    frame19,
+    frame20,
+    frame21,
+    frame22,
+    frame23,
+    frame24,
+    frame25,
+    frame26,
+    frame27,
+    // frame28,
+    // frame29
+]
+const tileHtmlImgs = [
+    Grass,
+    Dirt,
+    Brick,
+    Water,
+    Metal,
+    Sand,
+    Wood,
+    Stone,
+    Up,
+    Down
+]
+
+var player;
+function newPlayer() {
+    return {
+        x: 0,
+        y: 0,
+        vx: 0,
+        vy: 0,
+        w: 49,
+	    h: 32,
+        ax: .8,
+        jv: -18,
+        mvx: 40,
+        mvy: 20,
+        step_h: 12,
+        midair: true,
+        spawning: false,
+        spawnTimer: 100,
+        powerlevel: 0,
+        lives: 3,
+        ammo: 5,
+        type: myChoice == 0 ? 'Dog': 'Cat',
+        color: P_COLORS[mySID],
+        direction: 'right',
+        animationFrame: 1,
+        animationCount: 18,
+        draw() {
+            drawPlayer(this.x, this.y, this.w, this.h, this.type, this.color, this.direction, this.animationFrame, this.spawning)
+        },
+        update() {
+            if (this.spawning) {
+                this.x = Math.floor(camerax + 100 + mySID * 100)
+                this.y = 64;
+                this.vx = 0;
+                this.vy = 0;
+                this.spawnTimer--
+                if (this.spawnTimer <= 0) {
+                    this.spawnTimer = 100;
+                    this.spawning = false;
+                    socket.send(newPacket(EXPLODE,{
+                        x: this.x+this.w/2,
+                        y: this.y+this.h/2,
+                        r: Math.max(this.w, this.h),
+                        h: false
+                    }))
+                }
+                return;
+            }
+            this.vy += GRAVITY;
+            this.animationCount -= 1;
+            if (Math.abs(this.vx) > 0.3 && this.animationCount <= 0) {
+                this.animationFrame = (this.animationFrame + 1) % 4
+                this.animationCount = 18;
+            } else if(Math.abs(this.vx) <= 0.3 && this.animationCount <= 0) {
+                this.animationFrame = 1
+                this.animationCount = 18;
+            }
+            if (keys[37] || keys[65]) { //left
+                this.vx -= this.ax;
+                this.direction = "left"
+                if (this.vx < -this.maxv)
+                    this.vx = -this.maxv;
+            }
+            if (keys[39] || keys[68]) { //right
+                this.vx += this.ax;
+                this.direction = "right"
+                if (this.vx > this.maxv)
+                    this.vx = this.maxv;
+            }
+            if (keys[0] && !lastKeys[0] && this.ammo > 0) {
+                this.ammo --;
+                bombs[mySID].push(makeBomb())
+                makeSubtractNumber(1, W)
+            }
+            if (keys[2] && !lastKeys[2] && this.ammo > 1) {
+                this.ammo -= 2;
+                bombs[mySID].push(makeStickyBomb())
+                makeSubtractNumber(2, W)
+            }
+            if (!player.midair && ((keys[38] || keys[87]) && (!lastKeys[38] && !lastKeys[87])) ) { //up
+                this.vy = Math.min(-18 + this.ammo, -5);
+            }
+            if (this.vy >= 0) { //moving down
+                let y_cls = findYCollisionDown(this.y, this.vy, this.x, this.w, this.h);
+                if (y_cls == null) {
+                    this.y += this.vy;
+                    this.midair = true;
+                } else { //landed on something
+                    this.vy = 0;
+                    this.y = y_cls.y;
+                    this.midair = false;
+                }
+            } else { //moving up
+                let y_cls = findYCollisionUp(this.y, this.vy, this.x, this.w, this.h);
+                this.midair = true;
+                if (y_cls == null) {
+                    this.y += this.vy;
+                } else { //hit your head
+                    this.vy = 0;
+                    this.y = y_cls.y;
+                    this.midair = false;
+                }
+            }
+            if (this.vx > 0) { //moving right
+                let x_cls = findXCollisionRight(this.x, this.vx, this.y, this.w, this.h);
+                if (x_cls == null) this.x += this.vx;
+                else { //hit wall
+                    let step_h = this.y + this.h - x_cls.y;
+                    if (step_h <= this.step_h) {
+                        this.x = x_cls.x + 1;
+                        this.y -= step_h; //not implemented: climbing more than 1 step
+                    } else {
+                        this.vx = 0;
+                        this.x = x_cls.x;
+                    }
+                }
+            } else if(this.vx < 0) { //moving left
+                let x_cls = findXCollisionLeft(this.x, this.vx, this.y, this.w, this.h);
+                if (x_cls == null) this.x += this.vx;
+                else { //hit wall
+                    let step_h = this.y + this.h - x_cls.y;
+                    if (step_h <= this.step_h) {
+                        this.x = x_cls.x - 1;
+                        this.y -= step_h; //not implemented: climbing more than 1 step
+                    } else {
+                        this.vx = 0;
+                        this.x = x_cls.x;
+                    }
+                }
+            }
+            this.vx *= FRICTION;
+            if (Math.abs(this.vx) - .01 < 0) {
+                this.vx = 0;
+            }
+
+            //death
+            let ledge = camerax - 30
+            let redge = camerax + W + 30
+            let uedge = -30
+            let dedge = H + 30
+            if (this.x > redge) killplayer();
+            if (this.x+this.w < ledge) killplayer();
+            if (this.y > dedge) killplayer();
+            if (this.y+this.h < uedge) killplayer();
+            
+        }
+    }
+}
+
+function killplayer() {
+    socket.send(newPacket(DEATH, {x: player.x, y: player.y, c: player.color, ch: myChoice}))
+    player.spawning = true;
+    if (player.lives == 0) {
+        player.draw = () => {};
+        player.update = () => {};
+        socket.send(newPacket(DEAD, null))
+    } else {
+        player.lives--;
+        makeSubtractNumber(1, 192)
+    }
+}
+
+function drawPlayer(x, y, w, h, type, color, direction, frame, spawning=false) {
+    if (!spawning || Date.now() % 5 == 0) {
+        ctx.fillStyle = color;
+        let f_x = Math.floor(x - camerax);
+        let f_y = Math.floor(y);
+        ctx.drawImage(characterImages[type][color][direction][frame], f_x, f_y, w, h)
+    }    
+}
+
+function loadImages() {
+    let src = 'resources/'
+    for(type in characterImages) {
+        typesrc = src + type + '/'
+        for(color in characterImages[type]) {
+            let colorsrc = typesrc + color + '_' + type.toLowerCase() + '/'
+            for(let j = 1; j < 5; j++) {
+                let i = j;
+                if(i == 4) i = 2
+                let rimg = new Image()
+                rimg.src = colorsrc + type.toLowerCase() + '_walking_' + i.toString() + '_r.png'
+                characterImages[type][color]['right'].push(rimg)
+                let limg = new Image()
+                limg.src = colorsrc + type.toLowerCase() + '_walking_' + i.toString() + '_l.png'
+                characterImages[type][color]['left'].push(limg)
+            }
+        }
+    }
+}
+
+function connect() {
+	connectmsg.innerText = "Connecting... (make sure you allow unsafe scripts)";
+    var url = 'ws://' + myServer + ':8193';
+    socket = new WebSocket(url);
+    socket.onopen = function () {
+		connectmsg.hidden = true;
+		gamediv.hidden = false;
+		document.getElementById("body").style.backgroundColor = "#444";//"#888";
+		socket.send(newPacket(CONNECT, {name: myName, choice: myChoice}));
+        buttonsdiv.hidden = false;
+    }
+    socket.onclose = e => {
+        console.log('close')
+        connectdiv.hidden = false;
+		connectmsg.hidden = false;
+        gamediv.hidden = true;
+        players_ul.hidden = true;
+        players_ul.style.display = 'none';
+        gamediv.style.display = 'none';
+        document.getElementById("body").style.backgroundColor = "#FFF";
+        if (connectmsg.innerText == "Connecting... (make sure you allow unsafe scripts)")
+		connectmsg.innerText = "Connection Closed. Couldn't reach server. Check the server address, and make sure you load the unsafe script.";
+        buttonsdiv.hidden = true;
+        playing = false;
+        if (gameInt) clearInterval(gameInt);
+        backmusic.pause();
+    }
+    socket.onmessage = e => { // Packet Reception
+        let data = JSON.parse(e.data);
+        if (data.type == PLAYERLIST) { //used before game starts
+            replacePlayerList(data.obj.playerlist);
+        } else if (data.type == SERVER_PLAYING) {
+            connectmsg.innerText = 'Server has an ongoing game, try again later!'
+        } else if (data.type == SERVER_FULL) {
+            connectmsg.innerText = 'The server is full!'
+        } else if (data.type == READY) {
+            playing = true;
+            mySID = data.obj.id
+            worldframeorder = data.obj.f_ord
+            worldW = worldframeorder.length * W;
+            numPlayers = data.obj.num
+            for (let i = 0; i < numPlayers; i++) {
+                bombs.push([])
+            }
+            connectdiv.hidden = true;
+            initGame();
+            player.x = data.obj.x
+            backmusic.play();
+        } else if (data.type == TICK) {
+            let obj = data.obj;
+            camerax = obj.cx;
+            for (let listi in obj.p) {
+                if (listi != mySID){
+                    otherplayers[listi] = obj.p[listi];
+                }
+            }
+            for (let listi in obj.b) {
+                if (listi != mySID) {
+                    bombs[listi] = obj.b[listi];
+                }
+            }
+            ammoboxes = obj.a;
+            powerups = obj.pows;
+        } else if (data.type == EXPLODE) {
+            explode(data.obj.x, data.obj.y, data.obj.r, data.obj.h)
+            explosion_sound.pause();
+            explosion_sound.play();
+        } else if (data.type == DEATH) {
+            Particles.spiral(data.obj.x, data.obj.y, data.obj.c, 100);
+            if (data.obj.ch == 0) {
+                dog_death_sound.pause();
+                dog_death_sound.play();
+            } else {
+                cat_death_sound.pause();
+                cat_death_sound.play();
+            }
+
+        } else if (data.type == AMMO) {
+            let rand = Math.floor(Math.random() * 3) + 1
+            player.ammo += rand;
+            makeAddNumber(rand, W)
+        } else if (data.type == POWERUP) {
+            let rand = Math.floor(Math.random() * 3) + 1
+            player.powerlevel += rand;
+            makeAddNumber(rand, W/2 + 98)
+        } else if (data.type == DEAD) {
+            scorelist = data.obj;
+        } else if (data.type == HURT_SOUND) {
+            if (data.obj == 0) {
+                dog_woof_sound.pause();
+                dog_woof_sound.play();
+            } else {
+                cat_meow_sound.pause();
+                cat_meow_sound.play();
+            }
+
+        }
+    }
+}
+
+function sendReady(status) {
+    socket.send(newPacket(READY, status))
+}
+
+
+function newPacket(type, obj){
+	return JSON.stringify({'type': type, 'obj': obj});
+}
+
+function replacePlayerList(playerlist){
+    while (players_ul.hasChildNodes()) {
+        players_ul.removeChild(players_ul.lastChild);
+    }
+    for (let p of playerlist) {
+        let readyText = p.ready ? "" : ": Waiting..."
+        let node = document.createTextNode(p.name + readyText);
+        let lsit = document.createElement("li");
+        lsit.appendChild(node);
+        console.log(p)
+        lsit.style.color = P_COLORS[p.id]
+        lsit.style.padding = '10px';
+        players_ul.appendChild(lsit);
+    }
+}
+
+
+function makeBomb() {
+    let x = player.x + player.w/2
+    let y = player.y + player.h/2
+    let dx = (mouseX + camerax) - x
+    let dy = mouseY - y
+    let dc = Math.sqrt(dx ** 2 + dy ** 2)
+    let vx = dx / dc * 20
+    let vy = dy / dc * 20
+    let powerlevel = player.powerlevel
+    if(player.powerlevel > 0) {
+        makeSubtractNumber(player.powerlevel, W/2 + 98)
+        player.powerlevel = 0
+    }
+    return {
+        x: x,
+        y: y,
+        vx: vx,
+        vy: vy,
+        r: 10 + powerlevel,
+        countdown: 20,
+        rotation: 0,
+        getAsObj() {
+            return {x:this.x, y:this.y, r:this.r}
+        },
+        update() {
+            this.rotation += this.vx;
+            this.countdown -= 1;
+            if(this.countdown <= 0) {
+                bombs[mySID].pop()
+                socket.send(newPacket(EXPLODE, { 
+                    x: this.x,
+                    y: this.y,
+                    r: this.r * 5,
+                    h: true
+                }))
+
+            }
+            this.vy += GRAVITY;
+            if (this.vy >= 0) { //moving down
+                let y_cls = findYCollisionDown(this.y, this.vy, this.x, this.r, this.r);
+                if (y_cls == null) { 
+                    this.y += this.vy;
+                } else { //landed on something
+                    this.vy = this.vy * -0.5;;
+                    this.y = y_cls.y;
+                }
+            } else { //moving up
+                let y_cls = findYCollisionUp(this.y, this.vy, this.x, this.r, this.r);
+                if (y_cls == null) {
+                    this.y += this.vy;
+                } else { //hit your head
+                    this.vy = this.vy * -0.5;;
+                    this.y = y_cls.y;
+                }
+            }
+            if (this.vx > 0) { //moving right
+                let x_cls = findXCollisionRight(this.x, this.vx, this.y, this.r, this.r);
+                if (x_cls == null) this.x += this.vx;
+                else { //hit wall
+                    this.vx = this.vx * -0.5;
+                    this.x = x_cls.x;
+                }
+            } else if(this.vx < 0) { //moving left
+                let x_cls = findXCollisionLeft(this.x, this.vx, this.y, this.r, this.r);
+                if (x_cls == null) this.x += this.vx;
+                else { //hit wall
+                    this.vx = this.vx * -0.5;
+                    this.x = x_cls.x;
+                }
+            }
+            this.vx *= BOMB_FRICTION;
+            if (Math.abs(this.vx) - .01 < 0) {
+                this.vx = 0;
+            }
+        }
+    }
+}
+
+function makeStickyBomb() {
+    let x = player.x + player.w/2
+    let y = player.y + player.h/2
+    let dx = (mouseX + camerax) - x
+    let dy = mouseY - y
+    let dc = Math.sqrt(dx ** 2 + dy ** 2)
+    let vx = dx / dc * 20
+    let vy = dy / dc * 20
+    let powerlevel = player.powerlevel
+    if(player.powerlevel > 0) {
+        makeSubtractNumber(player.powerlevel, W/2 + 98)
+        player.powerlevel = 0
+    }
+
+    return {
+        x: x,
+        y: y,
+        vx: vx,
+        vy: vy,
+        r: 10 + powerlevel,
+        countdown: 20,
+        getAsObj() {
+            return {x:this.x, y:this.y, r:this.r}
+        },
+        update() {
+            this.countdown -= 1;
+            if(this.countdown <= 0) {
+                bombs[mySID].pop()
+                socket.send(newPacket(EXPLODE, { 
+                    x: this.x,
+                    y: this.y,
+                    r: this.r * 5,
+                    h: true
+                }))
+            }
+            if(this.vy != 0) {
+                this.vy += GRAVITY;
+            }
+            if (this.vy >= 0) { //moving down
+                let y_cls = findYCollisionDown(this.y, this.vy, this.x, this.r, this.r);
+                if (y_cls == null) { 
+                    this.y += this.vy;
+                } else { //landed on something
+                    this.vy = 0;
+                    this.vx = 0;
+                    this.y = y_cls.y;
+                }
+            } else { //moving up
+                let y_cls = findYCollisionUp(this.y, this.vy, this.x, this.r, this.r);
+                if (y_cls == null) {
+                    this.y += this.vy;
+                } else { //hit your head
+                    this.vy = 0;
+                    this.vx = 0;
+                    this.y = y_cls.y;
+                }
+            }
+            if (this.vx > 0) { //moving right
+                let x_cls = findXCollisionRight(this.x, this.vx, this.y, this.r, this.r);
+                if (x_cls == null) this.x += this.vx;
+                else { //hit wall
+                    this.vy = 0;
+                    this.vx = 0;
+                    this.x = x_cls.x;
+                }
+            } else if(this.vx < 0) { //moving left
+                let x_cls = findXCollisionLeft(this.x, this.vx, this.y, this.r, this.r);
+                if (x_cls == null) this.x += this.vx;
+                else { //hit wall
+                    this.vy = 0;
+                    this.vx = 0;
+                    this.x = x_cls.x;
+                }
+            }
+            if(this.vx != 0) {
+                this.vx *= BOMB_FRICTION;
+            }
+            if (Math.abs(this.vx) - .01 < 0) {
+                this.vx = 0;
+            }
+        }
+    }
+}
+
+function drawBomb(x, y, rw, rh, color, rotate) {
+    let f_x = Math.floor(x - camerax);
+    let f_y = Math.floor(y);
+    ctx.save();
+    ctx.translate(f_x, f_y)
+    ctx.rotate(rotate * TO_RADIANS)
+    ctx.drawImage(bomb, -(rw/2), -(rh/2), rw, rh);
+    ctx.restore()
+}
+
+function Point(x, y) {
+    this.x = x;
+    this.y = y;
+}
+
+setTimeout(() => {
+    connect();
+}, 1000)
+
+function initGame() {
+    loadImages()
+    gameInt = setInterval(tick, 1);
+    //load frames
+    for (let img of frameHtmlImgs) {
+        clearCanvas(frameloader, fl_ctx);
+        fl_ctx.drawImage(img, 0,0);
+        frames.push(getFrameData())
+    }
+
+    for (let img of tileHtmlImgs) {
+        clearCanvas(frameloader, fl_ctx);
+        fl_ctx.drawImage(img, 0,0)
+        tileimgdata.push(getFrameData(true))
+    }
+
+    //load into worldframes
+
+    // for (let f in frames) {
+    //     loadFrameimgdata(frames[f])
+    // }
+    clearCanvas(renderer, ctx);
+
+    //worldframeorder = [0,1,2,3,4,5] from server instead
+    for (let i in worldframeorder) {
+        let f = worldframeorder[i]
+        let newframe = loadFrameimgdata(frames[f])
+        // worldframeimgdatas.push(worldframes[i])
+        worldframeimgdatas.push(newframe)
+        
+    }
+
+    setupInputs();
+    player = newPlayer();
+
+    flushToCanvas()
+    if (typeof loadmsg !== 'undefined') loadmsg.parentNode.removeChild(loadmsg);
+
+}
+
+
+function loadFrameimgdata(frame) {
+    clearCanvas(renderer, ctx);
+    //draw all tiles to canvas
+    let f = frame;
+    for (let r = 0; r < f.length; r++){
+        for (let c = 0; c < f[0].length; c++){
+            let tileid = f[r][c]
+            if (tileid != null) {
+                ctx.putImageData(tileimgdata[tileid], c*32, r*32);
+            }
+            //else {
+            //}
+        }
+    }
+    //store in frameimgdata(temp)
+    let fd = ctx.getImageData(0, 0, W, H)
+    //push to worldframeimgdatas
+    // worldframes.push(fd);
+    return fd
+}
+
+function update() {
+    if (scorelist.length > 0) {
+        returnTimer--;
+        if (returnTimer <= 0) {
+            returnTimer = 0;
+            clearInterval(gameInt)
+            window.location = "http://cse.taylor.edu/~eyu/GameJam/GameJam-F2018/";
+        }
+    } 
+    if (player.update) player.update()
+    if (bombs[mySID]) {
+        for (let i = 0; i < bombs[mySID].length; i++) {
+            bombs[mySID][i].update();
+        }
+    }
+    sendServerTick()
+    lastKeys = JSON.parse(JSON.stringify(keys)); //deep copy
+}
+
+function sendServerTick() {
+    let mybombs = [];
+    for (let bomb of bombs[mySID]) {
+        mybombs.push(bomb.getAsObj())
+    }
+    socket.send(newPacket(TICK, {
+        p: {
+            x: player.x,
+            y: player.y,
+            w: player.w,
+            h: player.h,
+            t: player.type,
+            c: player.color,
+            d: player.direction,
+            af: player.animationFrame,
+            sp: player.spawning
+        },
+        b: mybombs
+    }));
+}
+
+
+function tick() {
+    if (Date.now() - lastTime > 10) {
+        lastTime = Date.now();
+        update();
+    }
+    draw();
+    Particles.update();
+}
+
+
+function flushToCanvas() {
+    vis_ctx.drawImage(renderer, 0, 0); //flush to canvas
+    if (playing) requestAnimationFrame(flushToCanvas);
+}
+
+function getFrameData(istile=false) {
+    let valid = false;
+    let w = 24
+    let h = 16
+    if (istile) {
+        w = 32;
+        h = 32;
+    }
+    data = []
+    raw_data = fl_ctx.getImageData(0, 0, w, h)
+    if (istile) return raw_data;
+    raw_data = raw_data.data
+    for (let row = 0; row < h; row++) {
+        data.push([])
+        for (let col = 0; col < w; col++) {
+            let pos = 4 * (col + row*w);
+            let colorstr = raw_data.slice(pos, pos+4).toString();
+            let tileid = TILES[colorstr]
+            if (tileid != 0) valid = true;
+            data[row].push(tileid);
+        }
+    }
+    if (!valid && !istile) console.log('thats a solid block buddy')
+    return data
+}
+
+function setWorldAlpha(x, y, val) {
+    let framenum = Math.floor(x / W);
+    if (framenum < 0) return;
+    x = (x+W) % W
+    framenum %= worldframeorder.length;
+    let myframe = worldframeimgdatas[framenum];
+    let pos = 4 * (x + y*W) + 3;
+    if(pos > myframe.data.length) return
+    myframe.data[pos] = val;
+}
+
+function darkenWorld(x, y) {
+    let framenum = Math.floor(x / W);
+    if (framenum < 0) return;
+    x = (x+W) % W
+    framenum %= worldframeorder.length;
+    let myframe = worldframeimgdatas[framenum];
+    let pos = 4 * (x + y*W);
+    if(pos > myframe.data.length) return
+    let rand = 1 + Math.floor(Math.random() * 4);
+    myframe.data[pos]  /= rand;
+    myframe.data[pos+1]/= rand;
+    myframe.data[pos+2]/= rand;
+}
+
+
+function getWorldAlpha(x, y) {
+    let framenum = Math.floor(x / W);
+    if (framenum < 0) return 0;
+    x = (x+W) % W
+    framenum %= worldframeorder.length;
+    let myframe = worldframeimgdatas[framenum];
+    return getAlpha(myframe, y, x);
+}
+
+function getAlpha(frameimgdata, row, col) {
+    if (row < 0 || row >= H) return 0;
+    let pos = 4 * (col + row*W) + 3;
+    return frameimgdata.data[pos];
+}
+
+
+function clearCanvas(canvasobj, canvas_ctx) {
+    canvas_ctx.clearRect(0, 0, canvasobj.width, canvasobj.height);
+}
+
+function drawworldframe() {
+    let framenum1 = Math.floor(camerax / W) % worldframeorder.length; //first frame to draw
+    let framenum2 = (framenum1 + 1) % worldframeorder.length; //second frame to draw
+    clearCanvas(alphacanvas, a_ctx)
+    a_ctx.putImageData(worldframeimgdatas[framenum1],Math.floor(-camerax%W),0)
+    a_ctx.putImageData(worldframeimgdatas[framenum2],Math.floor(-camerax%W + W), 0)
+    ctx.drawImage(alphacanvas, 0, 0)
+}
+
+function drawBackground() {
+    let frac = (Date.now() % 50000) / 50000;
+    frac = Math.round(100 * (2 - 6*Math.abs(frac - .5))) / 100
+    frac = Math.max(frac, 0)
+    frac = Math.min(frac, 1)
+    ctx.save()
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = frac
+    ctx.drawImage(back1, 0, 0);
+    ctx.globalAlpha = 1-frac;
+    ctx.drawImage(back2, 0, 0);
+    ctx.restore();
+}
+
+function draw() {
+    clearCanvas(renderer, ctx);
+    drawBackground();
+
+    drawworldframe();
+
+
+    Particles.draw(ctx, camerax)
+    
+    for(let i in otherplayers) {
+        if (i != mySID) {
+            let p = otherplayers[i]
+            if (p) drawPlayer(p.x, p.y, p.w, p.h, p.t, p.c, p.d, p.af, p.sp)
+        }
+    }
+    player.draw();
+    for(let i = 0; i < bombs.length; i++) {
+        if (bombs[i]){
+            for(let j = 0; j < bombs[i].length; j++) {
+                let b = bombs[i][j]
+                if (b) drawBomb(b.x, b.y, b.r, b.r, 'black', b.rotation)
+            }
+        }
+    }
+    for (let a of ammoboxes) {
+        drawAmmo(a.x, a.y);
+    }
+    for (let pow of powerups) {
+        drawPowerUp(pow.x, pow.y);
+    }
+    drawHUD();
+    drawNames();
+}
+
+
+function drawAmmo(x, y) {
+    ctx.drawImage(bomb_box, Math.floor(x-camerax), Math.floor(y));
+}
+
+function drawPowerUp(x, y) {
+    ctx.drawImage(bomb_upgrade, Math.floor(x-camerax), Math.floor(y));
+}
+
+function drawScoreList() {
+    for (let index = 0; index < scorelist.length; index++) {
+        let entry = scorelist[index];
+        msg = (index+1) + '. ' + entry.name + ': ' + entry.score + 's';
+        ctx.textAlign = 'start'
+        ctx.fillText(msg, 96, 128 + 48*index)
+    }
+}
+
+function drawNames() {
+    ctx.font = "12px 'Press Start 2P'";
+    ctx.strokeStyle = "black";
+    ctx.fillStyle = "white";
+    ctx.textAlign = 'center'
+    ctx.fillText(myName, player.x + player.w/2 - camerax, player.y - 4);
+    ctx.strokeText(myName, player.x + player.w/2 - camerax, player.y - 4);
+
+    for (let listi in otherplayers) {
+        if (listi != mySID){
+            let op = otherplayers[listi]
+            ctx.fillText(op.n, op.x + op.w/2 - camerax, op.y - 4);
+            ctx.strokeText(op.n, op.x + op.w/2 - camerax, op.y - 4);
+        }
+    }
+
+}
+
+function drawHUD() {
+    ctx.font = "24px 'Press Start 2P'";
+    ctx.fillStyle = "yellow"
+    ctx.textAlign = "start"
+    let msg = 'Lives: ' + player.lives
+    if (scorelist.length > 0) {
+        msg = 'Press Space to Return';
+        ctx.fillText(msg, 0, 24)
+        ctx.textAlign = "end"
+        msg = Math.round(returnTimer/100)
+        ctx.fillText(msg, W, 24)
+        drawScoreList();
+        return;
+    }
+    ctx.fillText(msg, 0, 24)
+    ctx.textAlign = "end"
+    msg = 'Ammo: ' + player.ammo
+    ctx.fillText(msg, W, 24)
+    ctx.textAlign = "center"
+    msg = 'Power: ' + player.powerlevel
+    ctx.fillText(msg, W/2, 24)
+    for(let i = 0; i < displayNumbers.length; i++) {
+        displayNumbers[i].draw()
+    }
+}
+
+function makeSubtractNumber(number, x) {
+    displayNumbers.push({
+        number: number,
+        duration: 80,
+        rotation: 0,
+        x: x,
+        draw() {
+            if(this.duration <= 0) {
+                displayNumbers.pop()
+            }
+            this.duration--
+            ctx.font = "24px 'Press Start 2P'";
+            ctx.fillStyle ='red'
+            ctx.textAlign = 'end'
+            let msg = '-' + this.number
+            ctx.fillText(msg, this.x, 72 - this.duration)
+        }
+    })
+
+}
+
+function makeAddNumber(number, x) {
+    displayNumbers.push({
+        number: number,
+        duration: 80,
+        rotation: 0,
+        x: x,
+        draw() {
+            if(this.duration <= 0) {
+                displayNumbers.pop()
+            }
+            this.duration--
+            ctx.font = "24px 'Press Start 2P'";
+            ctx.fillStyle ='green'
+            ctx.textAlign = 'end'
+            let msg = '+' + this.number
+            ctx.fillText(msg, this.x, 72 - this.duration)
+        }
+    })
+
+}
+
+function explode(ox, oy, range, hitplayers=true) {
+    ox = Math.floor(ox);
+    oy = Math.floor(oy);
+    Particles.explode(ox, oy, 'orange', 50, range/6)
+    if (hitplayers) throwPlayer(ox, oy, range);    
+    for (let y = oy - range * 2; y < oy + range*2; y++) {
+        for (let x = ox - range*2; x < ox + range*2; x++) {
+            let ydist = y-oy;
+            let xdist = x-ox;
+            if (ydist*ydist + xdist*xdist <= range*range) {
+                setWorldAlpha(x, y, 0)
+            } else if (ydist*ydist + xdist*xdist <= 1.5*range*range) {
+                darkenWorld(x, y);
+            }
+        }
+    }
+}
+
+function throwPlayer(x, y, range) {
+    let pcx = player.x + player.w/2;
+    let pcy = player.y + player.h/2;
+    let dx = pcx - x;
+    let dy = pcy - y
+    if(Math.abs(dx) < 2*range && Math.abs(dy) < 2*range) {
+        let dc = Math.sqrt(dx ** 2 + dy ** 2)
+        let vx = dx / Math.abs(dx) / dc * 1000
+        let vy = dy / Math.abs(dy) / dc * 500
+        player.vx += Math.max(Math.min(vx, 22), -22)
+        player.vy += Math.max(Math.min(vy, 22), -22)
+        socket.send(newPacket(HURT_SOUND, myChoice))
+    }
+}
+
+/* returns Point(x,y)
+ * y: suggested relocation
+ * x: collision position
+ */
+ function findYCollisionDown(y, vy, x, width, height) {
+    vy = Math.round(vy);
+    if (vy <= 0) return null;
+    y = Math.floor(y);
+    x = Math.floor(x);
+    let bottom = y + height
+    for (let r = bottom; r < bottom + vy; r++) {
+        // if (r >= H) return new Point(x, H - height);
+        for (let c = x; c < x + width; c++) {
+            if (getWorldAlpha(c, r) !== 0) {
+                return new Point(c, r - height);
+            }
+        }
+    }
+    return null;
+}
+function findYCollisionUp(y, vy, x, width, height) {
+    vy = Math.round(vy);
+    if (vy >= 0) return null;
+    y = Math.floor(y);
+    x = Math.floor(x);
+    for (let r = y-1; r > y + vy-1; r--) {
+        // if (r <= 0) return new Point(x, 0);
+        for (let c = x; c < x + width; c++) {
+            if (getWorldAlpha(c, r) !== 0) {
+                return new Point(c, r+1);
+            }
+        }
+    }
+    return null;
+}
+/* returns Point(x,y)
+ * y: collision position
+ * x: suggested relocation
+ */
+function findXCollisionRight(x, vx, y, width, height) {
+    vx = Math.round(vx);
+    if (vx <= 0) return null;
+    x = Math.floor(x);
+    y = Math.floor(y);
+    let right = x + width;
+    for (let c = right; c < right + vx; c++) {
+        // if (c >= camerax + W) return new Point(c - width, y); //right edge
+        for (let r = y; r < y + height; r++) {
+            if (getWorldAlpha(c, r) !== 0) {
+                return new Point(c - width, r);
+            }
+        }
+    }
+    return null
+}
+function findXCollisionLeft(x, vx, y, width, height) {
+    vx = Math.round(vx);
+    if (vx >= 0) return null;
+    x = Math.floor(x);
+    y = Math.floor(y);
+    for (let c = x-1; c > x + vx-1; c--) {
+        // if (c <= camerax) return new Point(camerax, y); //left edge
+        for (let r = y; r < y + height; r++) {
+            if (getWorldAlpha(c, r) !== 0) {
+                return new Point(c+1, r);
+            }
+        }
+    }
+    return null;
+}
+
+
+function setupInputs() {
+    onkeydown = e => {
+        let k = e.keyCode;
+        keys[k] = true;
+
+        if (scorelist.length > 0) {
+            if (keys[32] && !lastKeys[32]) {
+                window.location = "http://cse.taylor.edu/~eyu/GameJam/GameJam-F2018/";
+            }
+        }
+    }
+    
+    onkeyup = e => {
+        let k = e.keyCode;
+        keys[k] = false;
+    }
+    
+    canvas.onmousemove = e => {
+        mouseX = e.offsetX
+        mouseY = e.offsetY
+    }
+
+    canvas.onmousedown = e => {
+        let k = e.button;
+        keys[k] = true;
+    }
+    canvas.onmouseup = e => {
+        let k = e.button;
+        keys[k] = false;
+    }
+
+    canvas.oncontextmenu = e => {
+        e.preventDefault();
+    }
+}
+
+function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+    results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+</script>
