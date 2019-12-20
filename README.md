@@ -34,7 +34,7 @@ Python3 implementation of TUShell
 ## 'Starcher' Game Engine
 Port of 'Kool' game engine written in C++ and utilizing SFML graphics from Game Engine Architecture
 
-##TUShell
+## TUShell
 Shell program created for COS 421: Operating Systems. It has many features of a normal shell program including running programs that use `$PATH` and executing programs in the background (with the `&` suffix)
 
 
